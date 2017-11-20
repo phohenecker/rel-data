@@ -3,6 +3,11 @@
 """This module contains classes that define functions for reading and writing knowledge graphs, respectively."""
 
 
+import os
+import re
+import typing
+
+
 __author__ = "Patrick Hohenecker"
 __copyright__ = (
         "Copyright (c) 2017, Patrick Hohenecker\n"
@@ -36,6 +41,13 @@ __email__ = "mail@paho.at"
 __status__ = "Development"
 
 
+# ==================================================================================================================== #
+#  C O N S T A N T S                                                                                                   #
+# ==================================================================================================================== #
+
+
+#  FILE EXTENSIONS  ####################################################################################################
+
 CLASSES_INF_EXT = ".classes.data.inf"
 """str: The file extension that is used for storing inferred class memberships."""
 
@@ -65,3 +77,69 @@ RELATIONS_SPEC_EXT = ".relations.data"
 
 RELATIONS_VOCAB_EXT = ".relations"
 """str: The file extension that is used for storing relation definitions."""
+
+
+#  OTHER CONSTANTS  ####################################################################################################
+
+ALL_EXT = [
+        CLASSES_INF_EXT,
+        CLASSES_SPEC_EXT,
+        CLASSES_VOCAB_EXT,
+        INDIVIDUALS_SPEC_EXT,
+        LITERALS_INF_EXT,
+        LITERALS_SPEC_EXT,
+        LITERALS_VOCAB_EXT,
+        RELATIONS_INF_EXT,
+        RELATIONS_SPEC_EXT,
+        RELATIONS_VOCAB_EXT
+]
+"""list[str]: A list of all file extensions that are used to store the different parts of a knowledge graph."""
+
+KG_FILE_REGEX = "^(?P<base_name>.+)\\.({})$".format("|".join([e[1:] for e in ALL_EXT]))
+
+
+# ==================================================================================================================== #
+#  F U N C T I O N S                                                                                                   #
+# ==================================================================================================================== #
+
+
+def find_knowledge_graphs(input_dir: str) -> typing.List[str]:
+    """Scans the provided directory for stored knowledge graphs.
+    
+    Args:
+        input_dir (str): The path of the directory that is being searched.
+    
+    Returns:
+        list[str]: A list that contains the base names of all knowledge graphs that were found in ``input_dir``.
+    
+    Raises:
+        ValueError: If the specified directory does not exist.
+    """
+    # sanitize args
+    input_dir = str(input_dir)
+    if not os.path.isdir(input_dir):
+        raise ValueError("The specified <input_dir> does not exist: '{}'!".format(input_dir))
+    
+    # gather the base names of all files that have one of the required file extensions
+    candidates = set()
+    for file in os.listdir(input_dir):  # run through all files in the input dir
+        # check if the file has one of the considered file extensions
+        m = re.match(KG_FILE_REGEX, file)
+        if m is not None:
+            candidates.add(m.group("base_name"))
+    
+    # check for which of the found base names all of the required files exist
+    all_kgs = []
+    for base_name in candidates:
+        try:
+            for ext in ALL_EXT:  # run through the file extensions of all needed files
+                # if current extensions is not found -> skip candidate
+                if not os.path.isfile(os.path.join(input_dir, base_name + ext)):
+                    raise StopIteration
+            
+            # add candidate to the list of discovered knowledge graphs
+            all_kgs.append(base_name)
+        except StopIteration:
+            pass  # nothing to do
+    
+    return sorted(all_kgs)
