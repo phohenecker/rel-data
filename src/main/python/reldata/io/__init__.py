@@ -96,6 +96,7 @@ ALL_EXT = [
 """list[str]: A list of all file extensions that are used to store the different parts of a knowledge graph."""
 
 KG_FILE_REGEX = "^(?P<base_name>.+)\\.({})$".format("|".join([e[1:] for e in ALL_EXT]))
+"""str: A regex that matches any filename that belongs to one of the files of a knowledge graph."""
 
 
 # ==================================================================================================================== #
