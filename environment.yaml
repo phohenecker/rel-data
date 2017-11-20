@@ -33,5 +33,5 @@ dependencies:
   - python>=3.6
   - numpy>=1.13.1
   - pip:
+    - insanity>=2017.1
     - staticinit>=2017.1
-    - git+https://github.com/phohenecker/in-sanity
