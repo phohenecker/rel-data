@@ -107,6 +107,16 @@ class KgReaderTest(unittest.TestCase):
         
         # CHECK: loaded graph is correct
         self.assertEqual(target_kg, kg)
+    
+    def test_read_all(self):
+        # the resources dir contains one knowledge graph, which should be discovered and loaded
+        target_kgs = [kg_reader.KgReader.read("src/test/resources", "test-kg")]
+        
+        # load all knowledge graphs from resources dir
+        all_kgs = kg_reader.KgReader.read_all("src/test/resources")
+        
+        # CHECK: the knowledge graphs were loaded correctly
+        self.assertEqual(target_kgs, all_kgs)
 
 
 if __name__ == "__main__":

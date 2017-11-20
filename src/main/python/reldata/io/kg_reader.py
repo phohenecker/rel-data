@@ -3,6 +3,7 @@
 
 import os
 import re
+import typing
 
 from reldata import io
 from reldata.data import class_membership
@@ -294,3 +295,24 @@ class KgReader(object):
                 kg.triples.add(triple.Triple(sub, pred, obj, positive, True))  # True -> inferred
         
         return kg
+    
+    @classmethod
+    def read_all(cls, input_dir: str) -> typing.List[knowledge_graph.KnowledgeGraph]:
+        """Loads all knowledge graphs that are discovered in the specified directory.
+        
+        Args:
+        input_dir (str): The path of the directory that is being searched.
+    
+        Returns:
+            list[:class:`knowledge_graph.KnowledgeGraph`]: All knowledge graphs that were found in ``input_dir``.
+        
+        Raises:
+            ValueError: If the specified directory does not exist.
+        """
+        # sanitize args
+        input_dir = str(input_dir)
+        if not os.path.isdir(input_dir):
+            raise ValueError("The specified <input_dir> does not exist: '{}'!".format(input_dir))
+        
+        # load all knowledge graphs that are found in input_dir
+        return [cls.read(input_dir, kg) for kg in io.find_knowledge_graphs(input_dir)]
