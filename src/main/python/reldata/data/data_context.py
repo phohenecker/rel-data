@@ -100,7 +100,8 @@ class DataContext(object):
     
     def __enter__(self):
         # store active context
-        self._last_context = DataContext._current_context[self._thread_id]
+        if self._thread_id in DataContext._current_context:
+            self._last_context = DataContext._current_context[self._thread_id]
         # make self the active context
         DataContext._current_context[self._thread_id] = self
         
@@ -108,7 +109,12 @@ class DataContext(object):
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         # reinstate previously active context
-        DataContext._current_context[self._thread_id] = self._last_context
+        if self._last_context is not None:
+            DataContext._current_context[self._thread_id] = self._last_context
+        else:
+            del DataContext._current_context[self._thread_id]
+        
+        self._last_context = None
     
     def __getitem__(self, item):
         if item in self._data:
