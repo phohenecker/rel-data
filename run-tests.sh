@@ -32,4 +32,4 @@
 
 export PATH=`pwd`/src/test/resources:${PATH}
 export PYTHONPATH=`pwd`/src/main/python:`pwd`/src/test/resources:${PYTHONPATH}
-python3 -m unittest discover -s src/test/python -p "*_test.py"
+python3 -m unittest discover -s src/test/python -p "*_test.py" ${@}
