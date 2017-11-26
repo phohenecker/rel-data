@@ -127,7 +127,7 @@ class Store(object):
         else:
             self._buffer = "3"
     
-        time.sleep(0.1)
+        time.sleep(0.01)
     
         if index == 1:
             self._store_1 += self._buffer
