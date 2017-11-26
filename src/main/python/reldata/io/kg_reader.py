@@ -5,6 +5,10 @@ import os
 import re
 import typing
 
+import insanity
+
+from concurrent import futures
+
 from reldata import io
 from reldata.data import class_membership
 from reldata.data import data_context as dc
@@ -297,7 +301,7 @@ class KgReader(object):
         return kg
     
     @classmethod
-    def read_all(cls, input_dir: str) -> typing.List[knowledge_graph.KnowledgeGraph]:
+    def read_all(cls, input_dir: str, executor: futures.Executor=None) -> typing.List[knowledge_graph.KnowledgeGraph]:
         """Loads all knowledge graphs that are discovered in the specified directory.
         
         Args:
@@ -313,6 +317,30 @@ class KgReader(object):
         input_dir = str(input_dir)
         if not os.path.isdir(input_dir):
             raise ValueError("The specified <input_dir> does not exist: '{}'!".format(input_dir))
+        insanity.sanitize_type("executor", executor, futures.Executor, none_allowed=True)
         
-        # load all knowledge graphs that are found in input_dir
-        return [cls.read(input_dir, kg) for kg in io.find_knowledge_graphs(input_dir)]
+        # find all knowledge graphs in the input directory
+        all_kgs = io.find_knowledge_graphs(input_dir)
+        
+        # load all knowledge graphs that were found
+        if executor is None:
+            return [cls.read(input_dir, kg) for kg in all_kgs]
+        else:
+            all_kgs = [os.path.join(input_dir, kg) for kg in all_kgs]
+            return list(executor.map(cls._read_from_one, [kg for kg in all_kgs]))
+
+    @classmethod
+    def _read_from_one(cls, path: str) -> knowledge_graph.KnowledgeGraph:
+        """Splits the provided path into the directory and the base name of a knowledge graph, and then invokes
+        :meth:`read`.
+        
+        Args:
+            path (str): The path the contains both the input directory and the base name of a knowledge graph.
+        
+        Returns:
+            :class:`knowledge_graph.KnowledgeGraph`: The knowledge graph that was loaded from ``path``.
+        """
+        split_index = path.rfind(os.path.sep)
+        input_dir = path[:split_index]
+        base_name = path[split_index + 1:]
+        return cls.read(input_dir, base_name)

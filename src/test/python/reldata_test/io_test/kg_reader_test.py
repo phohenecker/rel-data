@@ -3,6 +3,8 @@
 
 import unittest
 
+from concurrent import futures
+
 from reldata.data import class_membership
 from reldata.data import data_context as dc
 from reldata.data import individual_factory
@@ -109,15 +111,35 @@ class KgReaderTest(unittest.TestCase):
         self.assertEqual(target_kg, kg)
     
     def test_read_all(self):
+        # the data that will be loaded
+        input_dir = "src/test/resources"
+        base_name = "test-kg"
+        
         # the resources dir contains one knowledge graph, which should be discovered and loaded
-        target_kgs = [kg_reader.KgReader.read("src/test/resources", "test-kg")]
+        target_kgs = [kg_reader.KgReader.read(input_dir, base_name)]
         
         # load all knowledge graphs from resources dir
-        all_kgs = kg_reader.KgReader.read_all("src/test/resources")
+        all_kgs = kg_reader.KgReader.read_all(input_dir)
         
         # CHECK: the knowledge graphs were loaded correctly
         self.assertEqual(target_kgs, all_kgs)
+        
+        # load all knowledge graphs with a thread pool
+        pool = futures.ThreadPoolExecutor(max_workers=1)
+        all_kgs = kg_reader.KgReader.read_all(input_dir, executor=pool)
+        pool.shutdown()
+        
+        # CHECK: the knowledge graphs were loaded correctly (with the thread pool)
+        self.assertEqual(target_kgs, all_kgs)
 
+        # load all knowledge graphs with a process pool
+        pool = futures.ProcessPoolExecutor(max_workers=1)
+        all_kgs = kg_reader.KgReader.read_all(input_dir, executor=pool)
+        pool.shutdown()
+
+        # CHECK: the knowledge graphs were loaded correctly (with the process pool)
+        self.assertEqual(target_kgs, all_kgs)
+        
 
 if __name__ == "__main__":
     unittest.main()
