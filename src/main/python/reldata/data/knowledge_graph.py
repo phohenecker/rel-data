@@ -54,14 +54,14 @@ class KnowledgeGraph(set_observer.SetObserver, individual_observer.IndividualObs
 
     def __init__(self):
         """Creates a new empty ``KnowledgeGraph``."""
-        self._classes = ordered_set.OrderedSet(class_type.ClassType, lambda c: c.index)
+        self._classes = ordered_set.OrderedSet(class_type.ClassType, self._index_func)
         self._classes.add_observer(self)
-        self._relations = ordered_set.OrderedSet(relation_type.RelationType, lambda r: r.index)
+        self._relations = ordered_set.OrderedSet(relation_type.RelationType, self._index_func)
         self._relations.add_observer(self)
-        self._literals = ordered_set.OrderedSet(literal_type.LiteralType, lambda l: l.index)
+        self._literals = ordered_set.OrderedSet(literal_type.LiteralType, self._index_func)
         self._literals.add_observer(self)
         
-        self._individuals = ordered_set.OrderedSet(individual.Individual, lambda i: i.index)
+        self._individuals = ordered_set.OrderedSet(individual.Individual, self._index_func)
         self._individuals.add_observer(self)
         self._triples = observable_set.ObservableSet(triple.Triple)
         self._triples.add_observer(self)
@@ -129,6 +129,18 @@ class KnowledgeGraph(set_observer.SetObserver, individual_observer.IndividualObs
         return self._triples
     
     #  METHODS  ########################################################################################################
+    
+    @staticmethod
+    def _index_func(obj) -> int:
+        """This function is passed as arg ``index_func`` to all created instances of :class:`ordered_set.OrderedSet`.
+        
+        Args:
+            obj: The object whose index should be retrieved.
+            
+        Returns:
+            int: The index of ``obj``.
+        """
+        return obj.index
     
     def _register_individual(self, i: individual.Individual) -> None:
         """Registers an individual that was added to the ``KnowledgeGraph``.
