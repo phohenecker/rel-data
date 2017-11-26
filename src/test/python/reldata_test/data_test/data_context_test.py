@@ -2,10 +2,12 @@
 # -*- coding: utf-8 -*-
 
 
+import threading
 import unittest
 
 from reldata.data import data_context as dc
 from reldata.data import individual_factory
+from reldata.data import knowledge_graph
 
 
 __author__ = "Patrick Hohenecker"
@@ -101,6 +103,43 @@ class DataContextTest(unittest.TestCase):
             ind = func_with_own_context()
             self.assertEqual(0, ind.index)
             self.assertEqual("individual-0", ind.name)
+    
+    def test_threading_support(self):
+        # create a target knowledge graph
+        with dc.DataContext():
+            target_kg = knowledge_graph.KnowledgeGraph()
+            for i in range(100):
+                target_kg.individuals.add(
+                        individual_factory.IndividualFactory.create_individual("individual-{}".format(i))
+                )
+            
+        # stores three KGs to be created in 3 threads
+        kgs = [None, None, None]
+        
+        # this is the KG-creation method that is executed by the threads
+        def create_kg(kg_list: list, index: int):
+            local_kg = knowledge_graph.KnowledgeGraph()
+            for x in range(100):
+                local_kg.individuals.add(
+                        individual_factory.IndividualFactory.create_individual("individual-{}".format(x))
+                )
+            kg_list[index] = local_kg
+
+        # create the same KG simultaneously in 3 threads
+        t_1 = threading.Thread(target=create_kg, args=(kgs, 0))
+        t_2 = threading.Thread(target=create_kg, args=(kgs, 1))
+        t_3 = threading.Thread(target=create_kg, args=(kgs, 2))
+        t_1.start()
+        t_2.start()
+        t_3.start()
+        t_1.join()
+        t_2.join()
+        t_3.join()
+        
+        # CHECK: all created KGs are equal to the expected target
+        self.assertEqual(target_kg, kgs[0])
+        self.assertEqual(target_kg, kgs[1])
+        self.assertEqual(target_kg, kgs[2])
 
 
 if __name__ == "__main__":

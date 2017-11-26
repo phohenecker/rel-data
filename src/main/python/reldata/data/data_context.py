@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 
+import functools
+import threading
 import typing
 
-import staticinit
+from reldata.util import sync
 
 
 __author__ = "Patrick Hohenecker"
@@ -42,13 +44,13 @@ __status__ = "Development"
 def new_context(func: typing.Callable) -> typing.Callable:
     """A function decorator that ensures that the annotated function is always executed in a fresh :class:`DataContext`.
     """
+    @functools.wraps(func)
     def func_with_context(*args, **kwargs):
         with DataContext():
             return func(*args, *kwargs)
     return func_with_context
     
 
-@staticinit.init()
 class DataContext(object):
     """An instance of ``DataContext`` is used to store the current state of the creation of a knowledge graph.
     
@@ -83,35 +85,30 @@ class DataContext(object):
     currently active context, this is invoked as ``DataContext.get_context().clear()``.
     """
     
-    _current_context = None
-    """DataContext: The currently active context."""
+    _current_context = dict()
+    """dict[int, DataContext]: The currently active contexts for all threads identifiers."""
     
     #  CONSTRUCTOR  ####################################################################################################
-    
-    @classmethod
-    def __static_init__(cls):
-        """Initializes the class ``DataContext``."""
-        # create initial, empty context
-        cls._current_context = cls()
         
     def __init__(self):
         """Creates a new empty ``DataContext``."""
-        self._data = dict()        # stores the data in the context
-        self._last_context = None  # stores the previous context if the current one is used in a with block
+        self._data = dict()                      # stores the data in the context
+        self._last_context = None                # stores previous context if the current one is used in a with block
+        self._thread_id = self._get_thread_id()  # the ID of the thread that context lives in
     
     #  MAGIC FUNCTIONS  ################################################################################################
     
     def __enter__(self):
         # store active context
-        self._last_context = DataContext._current_context
+        self._last_context = DataContext._current_context[self._thread_id]
         # make self the active context
-        DataContext._current_context = self
+        DataContext._current_context[self._thread_id] = self
         
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         # reinstate previously active context
-        DataContext._current_context = self._last_context
+        DataContext._current_context[self._thread_id] = self._last_context
     
     def __getitem__(self, item):
         if item in self._data:
@@ -123,6 +120,17 @@ class DataContext(object):
         self._data[key] = value
     
     #  METHODS  ########################################################################################################
+    
+    @staticmethod
+    def _get_thread_id() -> int:
+        """Retrieves a unique identifier for the thread that the object that invokes this method lives in.
+        
+        Returns:
+            int: The ID.
+        """
+        # NOTICE:
+        # we do not use threading.get_ident() to identify a thread, as Python recycles these identifiers
+        return id(threading.current_thread())
 
     def clear(self):
         """Resets a ``DataContext`` to its initial state.
@@ -132,10 +140,17 @@ class DataContext(object):
         self._data.clear()
     
     @classmethod
+    @sync.synchronized
     def get_context(cls):
-        """Retrieves the currently active context.
+        """Retrieves the currently active context for the Thread that invoked this method.
         
         Returns:
             DataContext: The context.
         """
-        return cls._current_context
+        # create context for current thread if there is none yet
+        thread_id = cls._get_thread_id()
+        if thread_id not in cls._current_context:
+            cls._current_context[thread_id] = DataContext()
+        
+        # return the requested DataContext
+        return cls._current_context[thread_id]
