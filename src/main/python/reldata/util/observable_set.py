@@ -76,7 +76,13 @@ class ObservableSet(collections.MutableSet, typing.Generic[T]):
         return item in self._data
     
     def __iter__(self) -> typing.Iterator[T]:
-        return iter(self._data)
+        # As it turned out, the order in which the data is iterated may vary over multiple executions of the same Python
+        # script if we simply return iter(self._data) in this method. Interestingly, this is the case even if we read
+        # a pickled knowledge graph and iterate through it's triples. However, to ensure a consistent order of
+        # iteration, we first order the triples (by their string representations).
+        ordered_data = list(self._data)
+        ordered_data.sort(key=lambda x: str(x))
+        return iter(ordered_data)
     
     def __len__(self) -> int:
         return len(self._data)
