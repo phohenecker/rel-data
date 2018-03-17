@@ -47,7 +47,7 @@ def new_context(func: typing.Callable) -> typing.Callable:
     @functools.wraps(func)
     def func_with_context(*args, **kwargs):
         with DataContext():
-            return func(*args, *kwargs)
+            return func(*args, **kwargs)
     return func_with_context
     
 
