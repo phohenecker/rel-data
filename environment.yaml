@@ -35,3 +35,4 @@ dependencies:
   - pip:
     - insanity>=2017.1
     - staticinit>=2017.1
+    - git+https://github.com/phohenecker/arg-magic

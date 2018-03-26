@@ -54,6 +54,7 @@ setup(
         description="A package that provides tools for creating knowledge graphs.",
         # download_url="https://github.com/phohenecker/rel-data/archive/v2017.1.tar.gz",  -> does not exist yet
         install_requires=[
+                "argmagic>=2017.1",
                 "insanity>=2017.1",
                 "numpy>=1.13.1",
                 "staticinit>=2017.1"
