@@ -56,6 +56,7 @@ setup(
         install_requires=[
                 "argmagic>=2017.1",
                 "insanity>=2017.1",
+                "mlbase>=2017.1",
                 "numpy>=1.13.1",
                 "staticinit>=2017.1"
         ],
