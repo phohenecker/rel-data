@@ -44,20 +44,24 @@ __status__ = "Development"
 class LiteralValue(object):
     """Describes an assignment of a literal value to an individual."""
 
-    def __init__(self, literal: literal_type.LiteralType, value, inferred: bool):
+    def __init__(self, literal: literal_type.LiteralType, value, inferred: bool=False, prediction: bool=False):
         """Creates a new instance of ``LiteralValue`` that specifies a type of literal together with an according value .
 
         Args:
             literal (:class:`literal_type.LiteralType`): Specifies :attr:`literal`.
             value: Specifies :attr:`value`.
-            inferred (bool): Specifies :attr:`inferred`.
+            inferred (bool, optional): Specifies :attr:`inferred`.
+            prediction (bool, optional): Specifies :attr:`prediction`.
         """
         # sanitize args
         insanity.sanitize_type("literal", literal, literal_type.LiteralType)
+        if inferred and prediction:
+            raise ValueError("A literal cannot be an inference and a prediction at the same time!")
     
         # specify attributes
         self._literal = literal
         self._inferred = bool(inferred)
+        self._prediction = bool(prediction)
         self._value = value
     
     #  MAGIC FUNCTIONS  ################################################################################################
@@ -67,17 +71,19 @@ class LiteralValue(object):
                 isinstance(other, LiteralValue) and
                 other.literal == self._literal and
                 other.inferred == self._inferred and
-                other.value == self._value
+                other.value == self._value and
+                other.prediction == self._prediction
         )
     
     def __hash__(self) -> int:
         return hash(str(self))
     
     def __str__(self) -> str:
-        return "LiteralValue(literal = {}, value = {}, inferred = {})".format(
+        return "LiteralValue(literal = {}, value = {}, inferred = {}, prediction = {})".format(
                 self._literal.index,
                 self._value,
-                self._inferred
+                self._inferred,
+                self._prediction
         )
 
     #  PROPERTIES  #####################################################################################################
@@ -91,6 +97,11 @@ class LiteralValue(object):
     def inferred(self) -> bool:
         """bool: Indicates whether the value has been inferred or specified."""
         return self._inferred
+    
+    @property
+    def prediction(self) -> bool:
+        """bool: Indicates whether the literal is a prediction target, i.e., it is neither a fact nor inferable."""
+        return self._prediction
 
     @property
     def value(self) -> typing.Any:
