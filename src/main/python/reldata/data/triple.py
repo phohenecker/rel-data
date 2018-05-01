@@ -59,7 +59,8 @@ class Triple(object):
             predicate: relation_type.RelationType,
             obj: individual.Individual,
             positive: bool,
-            inferred: bool
+            inferred: bool=False,
+            prediction: bool=False
     ):
         """Creates a new instance of `Triple`.
 
@@ -68,16 +69,20 @@ class Triple(object):
             predicate (int): Specifies :attr:`predicate`.
             obj (int): Specifies :attr:`Triple.subject`.
             positive (bool): Specifies :attr:`positive`.
-            inferred (bool): Specifies :attr:`inferred`.
+            inferred (bool, optional): Specifies :attr:`inferred`.
+            prediction (bool, optional): Specifies :attr:`prediction`.
         """
         insanity.sanitize_type("subject", subject, individual.Individual)
         insanity.sanitize_type("predicate", predicate, relation_type.RelationType)
         insanity.sanitize_type("obj", obj, individual.Individual)
+        if inferred and prediction:
+            raise ValueError("A triple cannot be an inference and a prediction at the same time!")
         
         self._inferred = bool(inferred)
         self._object = obj
         self._positive = bool(positive)
         self._predicate = predicate
+        self._prediction = bool(prediction)
         self._subject = subject
     
     #  MAGIC FUNCTIONS  ################################################################################################
@@ -89,7 +94,8 @@ class Triple(object):
                 other.predicate == self._predicate and
                 other.object == self._object and
                 other.positive == self._positive and
-                other.inferred == self._inferred
+                other.inferred == self._inferred and
+                other.prediction == self._prediction
         )
     
     def __getitem__(self, item):
@@ -105,19 +111,20 @@ class Triple(object):
         return 3
     
     def __str__(self):
-        return "Triple({}, {}, {}, positive = {}, inferred = {})".format(
+        return "Triple({}, {}, {}, positive = {}, inferred = {}, prediction = {})".format(
                 self._subject.index,
                 self._predicate.index,
                 self._object.index,
                 self._positive,
-                self._inferred
+                self._inferred,
+                self._prediction
         )
     
     #  PROPERTIES  #####################################################################################################
 
     @property
     def inferred(self) -> bool:
-        """bool: Indicates whether the triple has been inferred or specified."""
+        """bool: Indicates whether the triple has been inferred rather than specified as fact."""
         return self._inferred
     
     @property
@@ -134,6 +141,11 @@ class Triple(object):
     def predicate(self) -> relation_type.RelationType:
         """:class:`relation_type.RelationType`: The relation that is the predicate of the triple."""
         return self._predicate
+    
+    @property
+    def prediction(self) -> bool:
+        """bool: Indicates whether the triple is a prediction target, i.e., it is neither a fact nor inferable."""
+        return self._prediction
     
     @property
     def subject(self) -> individual.Individual:

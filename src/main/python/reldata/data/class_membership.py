@@ -42,21 +42,25 @@ __status__ = "Development"
 class ClassMembership(object):
     """Describes an individual's membership of a class."""
     
-    def __init__(self, cls: class_type.ClassType, is_member: bool, inferred: bool):
+    def __init__(self, cls: class_type.ClassType, is_member: bool, inferred: bool=False, prediction: bool=False):
         """Creates a new instance of ``ClassMembership`` that specifies the relation between an individual and a class.
         
         Args:
             cls (:class:`class_type.ClassType`): Specifies :attr:`class`.
             is_member (bool): Specifies :attr:`is_member`.
-            inferred (bool): Specifies :attr:`inferred`.
+            inferred (bool, optional): Specifies :attr:`inferred`.
+            prediction (bool, optional): Specifies :attr:`prediction`.
         """
         # sanitize args
         insanity.sanitize_type("cls", cls, class_type.ClassType)
+        if inferred and prediction:
+            raise ValueError("A class membership cannot be an inference and a prediction at the same time!")
         
         # specify attributes
         self._cls = cls
         self._inferred = bool(inferred)
         self._is_member = bool(is_member)
+        self._prediction = bool(prediction)
     
     #  MAGIC FUNCTIONS  ################################################################################################
     
@@ -65,17 +69,19 @@ class ClassMembership(object):
                 isinstance(other, ClassMembership) and
                 other.cls == self._cls and
                 other.inferred == self._inferred and
-                other.is_member == self._is_member
+                other.is_member == self._is_member and
+                other.prediction == self._prediction
         )
 
     def __hash__(self) -> int:
         return hash(str(self))
     
     def __str__(self) -> str:
-        return "ClassMembership(cls = {}, inferred = {}, is_member = {})".format(
+        return "ClassMembership(cls = {}, inferred = {}, is_member = {}, prediction = {})".format(
                 self._cls.index,
                 self._inferred,
-                self._is_member
+                self._is_member,
+                self._prediction
         )
 
     #  PROPERTIES  #####################################################################################################
@@ -94,3 +100,8 @@ class ClassMembership(object):
     def is_member(self) -> bool:
         """bool: Indicates whether the individual is a member of the class or not."""
         return self._is_member
+    
+    @property
+    def prediction(self) -> bool:
+        """bool: Indicates whether the membership is a prediction target, i.e., it is neither a fact nor inferable."""
+        return self._prediction
