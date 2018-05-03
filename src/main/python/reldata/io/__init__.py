@@ -51,6 +51,10 @@ __status__ = "Development"
 CLASSES_INF_EXT = ".classes.data.inf"
 """str: The file extension that is used for storing inferred class memberships."""
 
+CLASSES_PRED_EXT = ".classes.data.pred"
+"""str: The file extension that is used for storing class predictions, i.e., those that are neither facts nor inferable.
+"""
+
 CLASSES_SPEC_EXT = ".classes.data"
 """str: The file extension that is used for storing specified class memberships."""
 
@@ -63,6 +67,10 @@ INDIVIDUALS_SPEC_EXT = ".individuals"
 LITERALS_INF_EXT = ".literals.data.inf"
 """str: The file extension that is used for storing inferred literal values."""
 
+LITERALS_PRED_EXT = ".literals.data.pred"
+"""str: The file extension that is used for storing literal predictions, i.e., those that are neither facts nor
+inferable."""
+
 LITERALS_SPEC_EXT = ".literals.data"
 """str: The file extension that is used for storing specified literal values."""
 
@@ -71,6 +79,10 @@ LITERALS_VOCAB_EXT = ".literals"
 
 RELATIONS_INF_EXT = ".relations.data.inf"
 """str: The file extension that is used for storing inferred triples."""
+
+RELATIONS_PRED_EXT = ".relations.data.pred"
+"""str: The file extension that is used for storing triple predictions, i.e., those that are neither facts nor
+inferable."""
 
 RELATIONS_SPEC_EXT = ".relations.data"
 """str: The file extension that is used for storing specified triples."""

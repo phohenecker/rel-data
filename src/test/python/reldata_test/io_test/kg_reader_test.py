@@ -81,34 +81,47 @@ class KgReaderTest(unittest.TestCase):
             )
             
             ind_0 = individual_factory.IndividualFactory.create_individual("individual-0")
-            ind_0.classes.add(class_membership.ClassMembership(target_kg.classes[0], True, False))
-            ind_0.classes.add(class_membership.ClassMembership(target_kg.classes[2], False, True))
+            ind_0.classes.add(class_membership.ClassMembership(target_kg.classes[0], True))
+            ind_0.classes.add(class_membership.ClassMembership(target_kg.classes[1], True, prediction=True))
+            ind_0.classes.add(class_membership.ClassMembership(target_kg.classes[2], False, inferred=True))
+            ind_0.literals.add(literal_value.LiteralValue(target_kg.literals[1], "0-lit-1", prediction=True))
             ind_1 = individual_factory.IndividualFactory.create_individual("individual-1")
-            ind_1.classes.add(class_membership.ClassMembership(target_kg.classes[1], False, False))
-            ind_1.classes.add(class_membership.ClassMembership(target_kg.classes[0], True, True))
-            ind_1.literals.add(literal_value.LiteralValue(target_kg.literals[1], "1-lit-1", True))
+            ind_1.classes.add(class_membership.ClassMembership(target_kg.classes[1], False))
+            ind_1.classes.add(class_membership.ClassMembership(target_kg.classes[0], True, inferred=True))
+            ind_1.literals.add(literal_value.LiteralValue(target_kg.literals[1], "1-lit-1", inferred=True))
             ind_2 = individual_factory.IndividualFactory.create_individual("individual-2")
-            ind_2.classes.add(class_membership.ClassMembership(target_kg.classes[2], True, False))
-            ind_2.classes.add(class_membership.ClassMembership(target_kg.classes[0], False, True))
-            ind_2.literals.add(literal_value.LiteralValue(target_kg.literals[0], "2-lit-0", False))
+            ind_2.classes.add(class_membership.ClassMembership(target_kg.classes[2], True,))
+            ind_2.classes.add(class_membership.ClassMembership(target_kg.classes[0], False, inferred=True))
+            ind_2.literals.add(literal_value.LiteralValue(target_kg.literals[0], "2-lit-0"))
             ind_3 = individual_factory.IndividualFactory.create_individual("individual-3")
-            ind_3.classes.add(class_membership.ClassMembership(target_kg.classes[0], False, False))
-            ind_3.classes.add(class_membership.ClassMembership(target_kg.classes[2], True, True))
-            ind_3.literals.add(literal_value.LiteralValue(target_kg.literals[0], "3-lit-0", False))
-            ind_3.literals.add(literal_value.LiteralValue(target_kg.literals[1], "3-lit-1", False))
+            ind_3.classes.add(class_membership.ClassMembership(target_kg.classes[0], False))
+            ind_3.classes.add(class_membership.ClassMembership(target_kg.classes[1], False, prediction=True))
+            ind_3.classes.add(class_membership.ClassMembership(target_kg.classes[2], True, inferred=True))
+            ind_3.literals.add(literal_value.LiteralValue(target_kg.literals[0], "3-lit-0"))
+            ind_3.literals.add(literal_value.LiteralValue(target_kg.literals[1], "3-lit-1"))
     
-            target_kg.triples.add(triple.Triple(ind_0, target_kg.relations[1], ind_2, True, False))
-            target_kg.triples.add(triple.Triple(ind_3, target_kg.relations[0], ind_1, False, False))
-            target_kg.triples.add(triple.Triple(ind_3, target_kg.relations[0], ind_0, False, True))
-            target_kg.triples.add(triple.Triple(ind_2, target_kg.relations[1], ind_1, True, True))
+            target_kg.triples.add(triple.Triple(ind_0, target_kg.relations[1], ind_2, True))
+            target_kg.triples.add(triple.Triple(ind_3, target_kg.relations[0], ind_1, False))
+            target_kg.triples.add(triple.Triple(ind_3, target_kg.relations[0], ind_0, False, inferred=True))
+            target_kg.triples.add(triple.Triple(ind_2, target_kg.relations[1], ind_1, True, inferred=True))
+            target_kg.triples.add(triple.Triple(ind_0, target_kg.relations[0], ind_1, False, prediction=True))
+            target_kg.triples.add(triple.Triple(ind_1, target_kg.relations[0], ind_0, True, prediction=True))
 
         # //////// Tests -----------------------------------------------------------------------------------------------
         
         # load knowledge graph
         kg = kg_reader.KgReader.read("src/test/resources", "test-kg")
         
-        # CHECK: loaded graph is correct
+        # CHECK: vocabulary, individuals and triples of loaded graph are correct
         self.assertEqual(target_kg, kg)
+        
+        # iterate over all individuals in the loaded graph
+        for ind in kg.individuals:
+            
+            target_ind = target_kg.individuals[ind.index]
+            
+            self.assertEqual(target_ind.classes, ind.classes)
+            self.assertEqual(target_ind.literals, ind.literals)
     
     def test_read_all(self):
         # the data that will be loaded

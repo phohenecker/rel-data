@@ -103,12 +103,15 @@ class KgReader(object):
         classes_vocab = os.path.join(input_dir, basename + io.CLASSES_VOCAB_EXT)
         classes_spec = os.path.join(input_dir, basename + io.CLASSES_SPEC_EXT)
         classes_inf = os.path.join(input_dir, basename + io.CLASSES_INF_EXT)
+        classes_pred = os.path.join(input_dir, basename + io.CLASSES_PRED_EXT)
         relations_vocab = os.path.join(input_dir, basename + io.RELATIONS_VOCAB_EXT)
         relations_spec = os.path.join(input_dir, basename + io.RELATIONS_SPEC_EXT)
         relations_inf = os.path.join(input_dir, basename + io.RELATIONS_INF_EXT)
+        relations_pred = os.path.join(input_dir, basename + io.RELATIONS_PRED_EXT)
         literals_vocab = os.path.join(input_dir, basename + io.LITERALS_VOCAB_EXT)
         literals_spec = os.path.join(input_dir, basename + io.LITERALS_SPEC_EXT)
         literals_inf = os.path.join(input_dir, basename + io.LITERALS_INF_EXT)
+        literals_pred = os.path.join(input_dir, basename + io.LITERALS_PRED_EXT)
         
         # check whether the input directory exists
         if not os.path.isdir:
@@ -123,18 +126,24 @@ class KgReader(object):
             raise ValueError("Missing file: '{}'!".format(classes_spec))
         if not os.path.isfile(classes_inf):
             raise ValueError("Missing file: '{}'!".format(classes_inf))
+        if not os.path.isfile(classes_pred):
+            raise ValueError("Missing file: '{}'!".format(classes_pred))
         if not os.path.isfile(relations_vocab):
             raise ValueError("Missing file: '{}'!".format(relations_vocab))
         if not os.path.isfile(relations_spec):
             raise ValueError("Missing file: '{}'!".format(relations_spec))
         if not os.path.isfile(relations_inf):
             raise ValueError("Missing file: '{}'!".format(relations_inf))
+        if not os.path.isfile(relations_pred):
+            raise ValueError("Missing file: '{}'!".format(relations_pred))
         if not os.path.isfile(literals_vocab):
             raise ValueError("Missing file: '{}'!".format(literals_vocab))
         if not os.path.isfile(literals_spec):
             raise ValueError("Missing file: '{}'!".format(literals_spec))
         if not os.path.isfile(literals_inf):
             raise ValueError("Missing file: '{}'!".format(literals_inf))
+        if not os.path.isfile(literals_pred):
+            raise ValueError("Missing file: '{}'!".format(literals_pred))
     
         # //////// Read Vocabulary ---------------------------------------------------------------------------------
         
@@ -191,8 +200,7 @@ class KgReader(object):
                         current_ind.classes.add(
                                 class_membership.ClassMembership(
                                         kg.classes[class_index],
-                                        mem == 1,
-                                        False  # not inferred
+                                        mem == 1
                                 )
                         )
         
@@ -208,8 +216,24 @@ class KgReader(object):
                             class_membership.ClassMembership(
                                 kg.classes[class_index],
                                 mem == 1,
-                                True  # inferred
+                                inferred=True
                             )
+                        )
+        
+        # read memberships that are prediction targets
+        with open(classes_pred, "r") as f:
+            for individual_index, line in enumerate(f):  # run through all individuals
+                if line == "":
+                    continue
+                current_ind = kg.individuals[individual_index]
+                for class_index, mem in enumerate(map(int, re.findall(cls.MEMBERSHIPS_REGEX, line))):
+                    if mem != 0:  # only consider specified memberships
+                        current_ind.classes.add(
+                                class_membership.ClassMembership(
+                                        kg.classes[class_index],
+                                        mem == 1,
+                                        prediction=True
+                                )
                         )
 
         # //////// Read Literals -----------------------------------------------------------------------------------
@@ -232,8 +256,7 @@ class KgReader(object):
                 current_ind.literals.add(
                         literal_value.LiteralValue(
                                 current_lit,
-                                current_value,
-                                False  # not inferred
+                                current_value
                         )
                 )
         
@@ -256,7 +279,30 @@ class KgReader(object):
                         literal_value.LiteralValue(
                                 current_lit,
                                 current_value,
-                                True  # inferred
+                                inferred=True
+                        )
+                )
+        
+        # read literals that are prediction targets
+        with open(literals_pred, "r") as f:
+            for line in f:
+                if line == "":
+                    continue
+        
+                # parse read line
+                m = re.match(cls.TRIPLE_REGEX, line)
+        
+                # fetch respective individual, literal, and value
+                current_ind = kg.individuals[int(m.group("subject"))]
+                current_lit = kg.literals[int(m.group("predicate"))]
+                current_value = m.group("object")
+        
+                # add literal to individual
+                current_ind.literals.add(
+                        literal_value.LiteralValue(
+                                current_lit,
+                                current_value,
+                                prediction=True
                         )
                 )
         
@@ -278,7 +324,7 @@ class KgReader(object):
                 obj = kg.individuals[int(m.group("object"))]
                 
                 # add triple
-                kg.triples.add(triple.Triple(sub, pred, obj, positive, False))  # False -> not inferred
+                kg.triples.add(triple.Triple(sub, pred, obj, positive))
         
         # read inferred triples
         with open(relations_inf, "r") as f:
@@ -296,7 +342,25 @@ class KgReader(object):
                 obj = kg.individuals[int(m.group("object"))]
         
                 # add triple
-                kg.triples.add(triple.Triple(sub, pred, obj, positive, True))  # True -> inferred
+                kg.triples.add(triple.Triple(sub, pred, obj, positive, inferred=True))
+        
+        # read triples that are prediction targets
+        with open(relations_pred, "r") as f:
+            for line in f:
+                if line == "":
+                    continue
+        
+                # parse read line
+                m = re.match(cls.TYPED_TRIPLE_REGEX, line)
+        
+                # fetch respective individual, literal, and value
+                positive = m.group("type") == "+"
+                sub = kg.individuals[int(m.group("subject"))]
+                pred = kg.relations[int(m.group("predicate"))]
+                obj = kg.individuals[int(m.group("object"))]
+        
+                # add triple
+                kg.triples.add(triple.Triple(sub, pred, obj, positive, prediction=True))
         
         return kg
     
