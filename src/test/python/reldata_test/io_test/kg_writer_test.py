@@ -58,17 +58,28 @@ class KgWriterTest(unittest.TestCase):
         
         # CHECK: knowledge graph was written correctly
         self.assertEqual(target_kg, kg)
+
+        # iterate over all individuals in the loaded graph
+        for ind in kg.individuals:
+            target_ind = target_kg.individuals[ind.index]
+    
+            # CHECK: class memberships and literals were loaded correctly
+            self.assertEqual(target_ind.classes, ind.classes)
+            self.assertEqual(target_ind.literals, ind.literals)
         
         # remove created files again
         os.remove(os.path.join(".", "kg-writer-test-knowledge-graph" + io.CLASSES_VOCAB_EXT))
         os.remove(os.path.join(".", "kg-writer-test-knowledge-graph" + io.CLASSES_SPEC_EXT))
         os.remove(os.path.join(".", "kg-writer-test-knowledge-graph" + io.CLASSES_INF_EXT))
+        os.remove(os.path.join(".", "kg-writer-test-knowledge-graph" + io.CLASSES_PRED_EXT))
         os.remove(os.path.join(".", "kg-writer-test-knowledge-graph" + io.LITERALS_VOCAB_EXT))
         os.remove(os.path.join(".", "kg-writer-test-knowledge-graph" + io.LITERALS_SPEC_EXT))
         os.remove(os.path.join(".", "kg-writer-test-knowledge-graph" + io.LITERALS_INF_EXT))
+        os.remove(os.path.join(".", "kg-writer-test-knowledge-graph" + io.LITERALS_PRED_EXT))
         os.remove(os.path.join(".", "kg-writer-test-knowledge-graph" + io.RELATIONS_VOCAB_EXT))
         os.remove(os.path.join(".", "kg-writer-test-knowledge-graph" + io.RELATIONS_SPEC_EXT))
         os.remove(os.path.join(".", "kg-writer-test-knowledge-graph" + io.RELATIONS_INF_EXT))
+        os.remove(os.path.join(".", "kg-writer-test-knowledge-graph" + io.RELATIONS_PRED_EXT))
         os.remove(os.path.join(".", "kg-writer-test-knowledge-graph" + io.INDIVIDUALS_SPEC_EXT))
 
 

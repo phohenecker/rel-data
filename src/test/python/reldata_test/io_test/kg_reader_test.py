@@ -117,9 +117,9 @@ class KgReaderTest(unittest.TestCase):
         
         # iterate over all individuals in the loaded graph
         for ind in kg.individuals:
-            
             target_ind = target_kg.individuals[ind.index]
             
+            # CHECK: class memberships and literals were loaded correctly
             self.assertEqual(target_ind.classes, ind.classes)
             self.assertEqual(target_ind.literals, ind.literals)
     

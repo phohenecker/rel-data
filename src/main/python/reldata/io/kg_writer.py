@@ -63,19 +63,22 @@ class KgWriter(object):
             cls,
             kg: knowledge_graph.KnowledgeGraph,
             ind: individual.Individual
-    ) -> typing.Tuple[str, str]:
+    ) -> typing.Tuple[str, str, str]:
         num_classes = len(kg.classes)
         spec = ["0"] * num_classes
         inf = ["0"] * num_classes
+        pred = ["0"] * num_classes
         
         for c in ind.classes:
             value = "1" if c.is_member else "-1"
             if c.inferred:
                 inf[c.cls.index] = value
+            elif c.prediction:
+                pred[c.cls.index] = value
             else:
                 spec[c.cls.index] = value
         
-        return " ".join(spec) + "\n", " ".join(inf) + "\n"
+        return " ".join(spec) + "\n", " ".join(inf) + "\n", " ".join(pred) + "\n"
 
     @classmethod
     def write(cls, kg: knowledge_graph.KnowledgeGraph, target_dir: str, base_name: str) -> None:
@@ -123,35 +126,47 @@ class KgWriter(object):
         
         with open(os.path.join(target_dir, base_name + io.CLASSES_SPEC_EXT), "w") as f_spec:
             with open(os.path.join(target_dir, base_name + io.CLASSES_INF_EXT), "w") as f_inf:
-                for i in kg.individuals:
-                    spec, inf = cls._create_membership_vectors(kg, i)
-                    f_spec.write(spec)
-                    f_inf.write(inf)
+                with open(os.path.join(target_dir, base_name + io.CLASSES_PRED_EXT), "w") as f_pred:
+                    for i in kg.individuals:
+                        spec, inf, pred = cls._create_membership_vectors(kg, i)
+                        f_spec.write(spec)
+                        f_inf.write(inf)
+                        f_pred.write(pred)
         
         # //////// Write Literals --------------------------------------------------------------------------------------
 
         with open(os.path.join(target_dir, base_name + io.LITERALS_SPEC_EXT), "w") as f_spec:
             with open(os.path.join(target_dir, base_name + io.LITERALS_INF_EXT), "w") as f_inf:
-                for i in kg.individuals:
-                    for l in i.literals:
-                        line = cls.TRIPLES_PATTERN.format(subject=i.index, predicate=l.literal.index, object=l.value)
-                        if l.inferred:
-                            f_inf.write(line)
-                        else:
-                            f_spec.write(line)
+                with open(os.path.join(target_dir, base_name + io.LITERALS_PRED_EXT), "w") as f_pred:
+                    for i in kg.individuals:
+                        for l in i.literals:
+                            line = cls.TRIPLES_PATTERN.format(
+                                    subject=i.index,
+                                    predicate=l.literal.index,
+                                    object=l.value
+                            )
+                            if l.inferred:
+                                f_inf.write(line)
+                            elif l.prediction:
+                                f_pred.write(line)
+                            else:
+                                f_spec.write(line)
 
         # //////// Write Relations -------------------------------------------------------------------------------------
         
         with open(os.path.join(target_dir, base_name + io.RELATIONS_SPEC_EXT), "w") as f_spec:
             with open(os.path.join(target_dir, base_name + io.RELATIONS_INF_EXT), "w") as f_inf:
-                for t in kg.triples:
-                    line = cls.TYPED_TRIPLES_PATTERN.format(
-                            type=("+" if t.positive else "-"),
-                            subject=t.subject.index,
-                            predicate=t.predicate.index,
-                            object=t.object.index
-                    )
-                    if t.inferred:
-                        f_inf.write(line)
-                    else:
-                        f_spec.write(line)
+                with open(os.path.join(target_dir, base_name + io.RELATIONS_PRED_EXT), "w") as f_pred:
+                    for t in kg.triples:
+                        line = cls.TYPED_TRIPLES_PATTERN.format(
+                                type=("+" if t.positive else "-"),
+                                subject=t.subject.index,
+                                predicate=t.predicate.index,
+                                object=t.object.index
+                        )
+                        if t.inferred:
+                            f_inf.write(line)
+                        elif t.prediction:
+                            f_pred.write(line)
+                        else:
+                            f_spec.write(line)
