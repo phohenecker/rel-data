@@ -90,6 +90,12 @@ class ClassMembership(object):
     def cls(self) -> class_type.ClassType:
         """:class:`class_type.ClassType`: The class for which the membership is specified."""
         return self._cls
+
+    @property
+    def is_fact(self) -> bool:
+        """bool: Indicates whether the class membership is a fact, i.e., neither an inference nor a prediction target.
+        """
+        return not self._inferred and not self._prediction
     
     @property
     def inferred(self) -> bool:

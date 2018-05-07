@@ -128,6 +128,11 @@ class Triple(object):
         return self._inferred
     
     @property
+    def is_fact(self) -> bool:
+        """bool: Indicates whether the triple is a fact, i.e., neither an inference nor a prediction target."""
+        return not self._inferred and not self._prediction
+    
+    @property
     def object(self) -> individual.Individual:
         """:class:`individual.Individual`: The individual that is the object of the triple."""
         return self._object
