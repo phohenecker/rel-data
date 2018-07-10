@@ -103,13 +103,15 @@ class _Config(object):
 
 
 class _Occurrences(object):
-    """A helper class that encapsulates counts for positive/negative specified/inferable occurrences of triples and
-    classes, respectively.
+    """A helper class that encapsulates counts for positive/negative specified/inferable/predictable occurrences of
+    triples and classes, respectively.
     """
     
     def __init__(self):
         self.inf_neg = 0   # the number of inferable negative occurrences
         self.inf_pos = 0   # the number of inferable positive occurrences
+        self.pred_neg = 0  # the number of negative prediction occurrences
+        self.pred_pos = 0  # the number of positive prediction occurrences
         self.spec_neg = 0  # the number of specified negative occurrences
         self.spec_pos = 0  # the number of specified positive occurrences
 
@@ -209,6 +211,11 @@ def main(args: _Config) -> None:
                         classes[cls_mem.cls.name].inf_pos += 1
                     else:
                         classes[cls_mem.cls.name].inf_neg += 1
+                elif cls_mem.prediction:
+                    if cls_mem.is_member:
+                        classes[cls_mem.cls.name].pred_pos += 1
+                    else:
+                        classes[cls_mem.cls.name].pred_neg += 1
                 else:
                     if cls_mem.is_member:
                         classes[cls_mem.cls.name].spec_pos += 1
@@ -227,6 +234,11 @@ def main(args: _Config) -> None:
                     relations[triple.predicate.name].inf_pos += 1
                 else:
                     relations[triple.predicate.name].inf_neg += 1
+            elif triple.prediction:
+                if triple.positive:
+                    relations[triple.predicate.name].pred_pos += 1
+                else:
+                    relations[triple.predicate.name].pred_neg += 1
             else:
                 if triple.positive:
                     relations[triple.predicate.name].spec_pos += 1
@@ -239,14 +251,15 @@ def main(args: _Config) -> None:
                 (
                         name,
                         "{} / {}".format(stats.spec_pos, stats.spec_neg),
-                        "{} / {}".format(stats.inf_pos, stats.inf_neg)
+                        "{} / {}".format(stats.inf_pos, stats.inf_neg),
+                        "{} / {}".format(stats.spec_pos, stats.spec_neg)
                 )
                 for name, stats in sorted(classes.items(), key=lambda x: x[0])
         ]
         print(
                 util.Table(title="CLASSES").add(
                         class_data,
-                        column_labels=["name", "spec. members (+/-)", "inf. members (+/-)"]
+                        column_labels=["name", "spec. members (+/-)", "inf. members (+/-)", "pred. member (+/-)"]
                 )
         )
     else:
@@ -259,14 +272,15 @@ def main(args: _Config) -> None:
                 (
                         name,
                         "{} / {}".format(stats.spec_pos, stats.spec_neg),
-                        "{} / {}".format(stats.inf_pos, stats.inf_neg)
+                        "{} / {}".format(stats.inf_pos, stats.inf_neg),
+                        "{} / {}".format(stats.spec_pos, stats.spec_neg)
                 )
                 for name, stats in sorted(relations.items(), key=lambda x: x[0])
         ]
         print(
                 util.Table(title="RELATIONS").add(
                         relation_data,
-                        column_labels=["name", "spec. triples (+/-)", "inf. triples (+/-)"]
+                        column_labels=["name", "spec. triples (+/-)", "inf. triples (+/-)", "pred. member (+/-)"]
                 )
         )
     else:
