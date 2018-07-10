@@ -252,7 +252,7 @@ def main(args: _Config) -> None:
                         name,
                         "{} / {}".format(stats.spec_pos, stats.spec_neg),
                         "{} / {}".format(stats.inf_pos, stats.inf_neg),
-                        "{} / {}".format(stats.spec_pos, stats.spec_neg)
+                        "{} / {}".format(stats.pred_pos, stats.pred_neg)
                 )
                 for name, stats in sorted(classes.items(), key=lambda x: x[0])
         ]
@@ -273,7 +273,7 @@ def main(args: _Config) -> None:
                         name,
                         "{} / {}".format(stats.spec_pos, stats.spec_neg),
                         "{} / {}".format(stats.inf_pos, stats.inf_neg),
-                        "{} / {}".format(stats.spec_pos, stats.spec_neg)
+                        "{} / {}".format(stats.pred_pos, stats.pred_neg)
                 )
                 for name, stats in sorted(relations.items(), key=lambda x: x[0])
         ]
