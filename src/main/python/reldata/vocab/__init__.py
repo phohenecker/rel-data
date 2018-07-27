@@ -3,6 +3,14 @@
 """This package provides classes that can be used to specify the vocabulary that is used by a knowledge graph."""
 
 
+from reldata.vocab.class_type import ClassType
+from reldata.vocab.class_type_factory import ClassTypeFactory
+from reldata.vocab.literal_type import LiteralType
+from reldata.vocab.literal_type_factory import LiteralTypeFactory
+from reldata.vocab.relation_type import RelationType
+from reldata.vocab.relation_type_factory import RelationTypeFactory
+
+
 __author__ = "Patrick Hohenecker"
 __copyright__ = (
         "Copyright (c) 2017, Patrick Hohenecker\n"
