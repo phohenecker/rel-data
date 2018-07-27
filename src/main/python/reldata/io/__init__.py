@@ -7,6 +7,9 @@ import os
 import re
 import typing
 
+from reldata.io.kg_reader import KgReader
+from reldata.io.kg_writer import KgWriter
+
 
 __author__ = "Patrick Hohenecker"
 __copyright__ = (
