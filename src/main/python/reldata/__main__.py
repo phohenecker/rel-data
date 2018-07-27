@@ -4,13 +4,13 @@
 """Executing the :mod:`reldata` package runs a tool for analysing knowledge graphs."""
 
 
+import itertools
 import os
 import typing
 
 import argmagic
 
 from argmagic import decorators
-from mlbase import util
 
 from reldata.io import kg_reader
 
@@ -117,6 +117,40 @@ class _Occurrences(object):
 
 
 # ==================================================================================================================== #
+#  H E L P E R  F U N C T I O N S                                                                                      #
+# ==================================================================================================================== #
+
+
+def print_table(title: str, data: typing.Sequence[typing.Sequence[str]], column_labels: typing.Sequence[str]) -> None:
+    """TODO"""
+    num_cols = len(column_labels)
+    col_lengths = [0] * num_cols
+    
+    # determine the space requirements of each columns
+    for line in itertools.chain([column_labels], data):
+        for col_idx in range(num_cols):
+            col_lengths[col_idx] = max(col_lengths[col_idx], len(line[col_idx]))
+    
+    # determine total length of each line
+    total_length = sum(col_lengths) + num_cols * 3 + 1
+    
+    # build pattern for printing lines
+    line_pattern = "|"
+    for col_len in col_lengths:
+        line_pattern += " {{:{}}} |".format(col_len)
+    
+    # print table
+    print("=" * total_length)
+    print("|{{:^{}}}|".format(total_length - 2).format(title))
+    print("=" * total_length)
+    print(line_pattern.format(*column_labels))
+    print("-" * total_length)
+    for line in data:
+        print(line_pattern.format(*line))
+    print("=" * total_length)
+
+
+# ==================================================================================================================== #
 #  M A I N                                                                                                             #
 # ==================================================================================================================== #
 
@@ -168,10 +202,6 @@ def main(args: _Config) -> None:
         if not os.path.isfile(literals_inf):
             print("Missing file: '{}'!".format(literals_inf))
             return
-
-    # print the provided configuration
-    print(util.Table.create_table(argmagic.get_config(args), title="Configuration"))
-    print()
     
     # load the knowledge graph(s) to analyze
     if args.base_name is None:
@@ -256,11 +286,10 @@ def main(args: _Config) -> None:
                 )
                 for name, stats in sorted(classes.items(), key=lambda x: x[0])
         ]
-        print(
-                util.Table(title="CLASSES").add(
-                        class_data,
-                        column_labels=["name", "spec. members (+/-)", "inf. members (+/-)", "pred. member (+/-)"]
-                )
+        print_table(
+                "CLASSES",
+                class_data,
+                ["name", "spec. members (+/-)", "inf. members (+/-)", "pred. member (+/-)"]
         )
     else:
         print("No classes were found!")
@@ -277,11 +306,10 @@ def main(args: _Config) -> None:
                 )
                 for name, stats in sorted(relations.items(), key=lambda x: x[0])
         ]
-        print(
-                util.Table(title="RELATIONS").add(
-                        relation_data,
-                        column_labels=["name", "spec. triples (+/-)", "inf. triples (+/-)", "pred. member (+/-)"]
-                )
+        print_table(
+                "RELATIONS",
+                relation_data,
+                ["name", "spec. triples (+/-)", "inf. triples (+/-)", "pred. member (+/-)"]
         )
     else:
         print("No relations were found!")
@@ -293,11 +321,10 @@ def main(args: _Config) -> None:
                 (name, stats)
                 for name, stats in sorted(literals.items(), key=lambda x: x[0])
         ]
-        print(
-                util.Table(title="LITERALS").add(
-                        literal_data,
-                        column_labels=["name", "occurrences"]
-                )
+        print_table(
+                "LITERALS",
+                literal_data,
+                ["name", "occurrences"]
         )
     else:
         print("No literals were found!")
