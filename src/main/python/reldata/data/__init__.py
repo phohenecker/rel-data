@@ -3,6 +3,17 @@
 """This package provides classes for specifying the actual data, both factual and inferred, in a knowledge graph."""
 
 
+from reldata.data.base_individual import BaseIndividual
+from reldata.data.class_membership import ClassMembership
+from reldata.data.data_context import DataContext
+from reldata.data.data_context import new_context
+from reldata.data.individual import Individual
+from reldata.data.individual_factory import IndividualFactory
+from reldata.data.knowledge_graph import KnowledgeGraph
+from reldata.data.literal_value import LiteralValue
+from reldata.data.triple import Triple
+
+
 __author__ = "Patrick Hohenecker"
 __copyright__ = (
         "Copyright (c) 2017, Patrick Hohenecker\n"
