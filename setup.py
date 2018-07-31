@@ -30,7 +30,7 @@ __copyright__ = (
         "(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS\n"
         "SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
 )
-__license__ = "Simplified BSD License"
+__license__ = "BSD-2-Clause"
 __version__ = "2017.1"
 __date__ = "Nov 14, 2017"
 __maintainer__ = "Patrick Hohenecker"
@@ -59,7 +59,7 @@ setup(
                 "numpy>=1.13.1",
                 "staticinit>=2017.1"
         ],
-        license="Simplified BSD License",
+        license="BSD-2-Clause",
         long_description=long_description,
         name="reldata",
         package_dir={"": "src/main/python"},
