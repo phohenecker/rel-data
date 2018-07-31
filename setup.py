@@ -47,12 +47,12 @@ setup(
         classifiers=[
                 "Programming Language :: Python :: 3"
         ],
-        copyright="Copyright (c) 2018 Patrick Hohenecker",
+        copyright="Copyright (c) 2017 Patrick Hohenecker",
         data_files=[
                 (".", ["LICENSE", "README.md"])
         ],
         description="Tools for working with relational data and knowledge graphs.",
-        download_url="https://github.com/phohenecker/rel-data/archive/v2018.1.tar.gz",
+        download_url="https://github.com/phohenecker/rel-data/archive/v2017.1.tar.gz",
         install_requires=[
                 "argmagic>=2017.1",
                 "insanity>=2017.1",
@@ -72,5 +72,5 @@ setup(
         ],
         python_requires=">=3",
         url="https://github.com/phohenecker/rel-data",
-        version="2018.1"
+        version="2017.1"
 )
