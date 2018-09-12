@@ -20,7 +20,7 @@ Installation
 The package `reldata` can be installed from PyPI:
 
 ```
-pip install git+http://git.paho.at/phohenecker/rel-data
+pip install git+https://github.com/phohenecker/rel-data
 ```
 
 
