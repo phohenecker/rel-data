@@ -17,9 +17,10 @@ Any predicates of an arity greater than two cannot be handled by this package.
 Installation
 ------------
 
-The package `reldata` can be installed from PyPI:
+The package `reldata` (including dependencies) can be installed from PyPI:
 
 ```
+pip install git+https://github.com/phohenecker/arg-magic
 pip install git+https://github.com/phohenecker/rel-data
 ```
 
