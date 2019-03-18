@@ -6,6 +6,8 @@ import typing
 
 import insanity
 
+from collections import abc
+
 from reldata import io
 from reldata.data import individual
 from reldata.data import knowledge_graph
@@ -81,13 +83,22 @@ class KgWriter(object):
         return " ".join(spec) + "\n", " ".join(inf) + "\n", " ".join(pred) + "\n"
 
     @classmethod
-    def write(cls, kg: knowledge_graph.KnowledgeGraph, target_dir: str, base_name: str) -> None:
+    def write(
+            cls,
+            kg: knowledge_graph.KnowledgeGraph,
+            target_dir: str,
+            base_name: str,
+            index: int = None
+    ) -> None:
         """Writes the provided knowledge graph to the specified path.
         
         Args:
             kg (:class:`knowledge_graph.KnowledgeGraph`): The knowledge graph to write to disk.
             target_dir (str): The path of the directory to place all the files in.
             base_name (str): The base name to use, i.e., the prefix, included in all files' names.
+            index (int, optional): If this is provided, then ``input_dir`` and ``basename`` are assumed to specify a
+                sequence of knowledge graphs, and ``index`` specifies the element of this sequence to be written to
+                disk.
         
         Raises:
             ValueError: If ``target_dir`` does not refer to an existing directory.
@@ -98,6 +109,9 @@ class KgWriter(object):
         base_name = str(base_name)
         if not os.path.isdir(target_dir):
             raise ValueError("The directory <target_dir> does not exist: '{}'!".format(target_dir))
+        if index is not None:
+            insanity.sanitize_type("index", index, int)
+            insanity.sanitize_range("index", index, minimum=0)
 
         # //////// Write Vocabulary ------------------------------------------------------------------------------------
         
@@ -123,10 +137,17 @@ class KgWriter(object):
                 f.write(cls.VOCAB_PATTERN.format(index=i.index, name=i.name))
 
         # //////// Write Class Memberships -----------------------------------------------------------------------------
-        
-        with open(os.path.join(target_dir, base_name + io.CLASSES_SPEC_EXT), "w") as f_spec:
-            with open(os.path.join(target_dir, base_name + io.CLASSES_INF_EXT), "w") as f_inf:
-                with open(os.path.join(target_dir, base_name + io.CLASSES_PRED_EXT), "w") as f_pred:
+
+        classes_spec = os.path.join(target_dir, base_name + io.CLASSES_SPEC_EXT)
+        classes_inf = os.path.join(target_dir, base_name + io.CLASSES_INF_EXT)
+        classes_pred = os.path.join(target_dir, base_name + io.CLASSES_PRED_EXT)
+        if index is not None:
+            classes_spec += "." + str(index)
+            classes_inf += "." + str(index)
+            classes_pred += "." + str(index)
+        with open(classes_spec, "w") as f_spec:
+            with open(classes_inf, "w") as f_inf:
+                with open(classes_pred, "w") as f_pred:
                     for i in kg.individuals:
                         spec, inf, pred = cls._create_membership_vectors(kg, i)
                         f_spec.write(spec)
@@ -135,9 +156,16 @@ class KgWriter(object):
         
         # //////// Write Literals --------------------------------------------------------------------------------------
 
-        with open(os.path.join(target_dir, base_name + io.LITERALS_SPEC_EXT), "w") as f_spec:
-            with open(os.path.join(target_dir, base_name + io.LITERALS_INF_EXT), "w") as f_inf:
-                with open(os.path.join(target_dir, base_name + io.LITERALS_PRED_EXT), "w") as f_pred:
+        literals_spec = os.path.join(target_dir, base_name + io.LITERALS_SPEC_EXT)
+        literals_inf = os.path.join(target_dir, base_name + io.LITERALS_INF_EXT)
+        literals_pred = os.path.join(target_dir, base_name + io.LITERALS_PRED_EXT)
+        if index is not None:
+            literals_spec += "." + str(index)
+            literals_inf += "." + str(index)
+            literals_pred += "." + str(index)
+        with open(literals_spec, "w") as f_spec:
+            with open(literals_inf, "w") as f_inf:
+                with open(literals_pred, "w") as f_pred:
                     for i in kg.individuals:
                         for l in i.literals:
                             line = cls.TRIPLES_PATTERN.format(
@@ -153,10 +181,17 @@ class KgWriter(object):
                                 f_spec.write(line)
 
         # //////// Write Relations -------------------------------------------------------------------------------------
-        
-        with open(os.path.join(target_dir, base_name + io.RELATIONS_SPEC_EXT), "w") as f_spec:
-            with open(os.path.join(target_dir, base_name + io.RELATIONS_INF_EXT), "w") as f_inf:
-                with open(os.path.join(target_dir, base_name + io.RELATIONS_PRED_EXT), "w") as f_pred:
+
+        relations_spec = os.path.join(target_dir, base_name + io.RELATIONS_SPEC_EXT)
+        relations_inf = os.path.join(target_dir, base_name + io.RELATIONS_INF_EXT)
+        relations_pred = os.path.join(target_dir, base_name + io.RELATIONS_PRED_EXT)
+        if index is not None:
+            relations_spec += "." + str(index)
+            relations_inf += "." + str(index)
+            relations_pred += "." + str(index)
+        with open(relations_spec, "w") as f_spec:
+            with open(relations_inf, "w") as f_inf:
+                with open(relations_pred, "w") as f_pred:
                     for t in kg.triples:
                         line = cls.TYPED_TRIPLES_PATTERN.format(
                                 type=("+" if t.positive else "-"),
@@ -170,3 +205,32 @@ class KgWriter(object):
                             f_pred.write(line)
                         else:
                             f_spec.write(line)
+    
+    @classmethod
+    def write_sequence(
+            cls,
+            seq: typing.Sequence[knowledge_graph.KnowledgeGraph],
+            target_dir: str,
+            base_name: str
+    ) -> None:
+        """Writes the provided knowledge graph to the specified path.
+
+        Args:
+            seq (sequence[:class:`knowledge_graph.KnowledgeGraph`]): The knowledge graph sequence to write to disk.
+            target_dir (str): The path of the directory to place all the files in.
+            base_name (str): The base name to use, i.e., the prefix, included in all files' names.
+
+        Raises:
+            ValueError: If ``target_dir`` does not refer to an existing directory.
+        """
+        # sanitize args
+        insanity.sanitize_type("seq", seq, abc.Sequence)
+        insanity.sanitize_iterable("seq", seq, elements_type=knowledge_graph.KnowledgeGraph, min_length=1)
+        target_dir = str(target_dir)
+        if not os.path.isdir(target_dir):
+            raise ValueError("The provided <target_dir> does not exist: '{}'!".format(target_dir))
+        base_name = str(base_name)
+        
+        # write the sequence to disk
+        for idx, kg in enumerate(seq):
+            cls.write(kg, target_dir, base_name, index=idx)

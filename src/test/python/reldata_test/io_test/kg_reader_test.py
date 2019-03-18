@@ -152,6 +152,153 @@ class KgReaderTest(unittest.TestCase):
 
         # CHECK: the knowledge graphs were loaded correctly (with the process pool)
         self.assertEqual(target_kgs, all_kgs)
+    
+    def test_read_sequence(self):
+        
+        # //////// Knowledge Graph Sequence ----------------------------------------------------------------------------
+    
+        # this knowledge graph sequence describes what is specified in the files src/test/resources/kg-seq.*
+        
+        # create the common vocabulary of all KGs
+        with dc.DataContext():
+            vocab_classes = [
+                    ctf.ClassTypeFactory.create_class("class-0"),
+                    ctf.ClassTypeFactory.create_class("class-1"),
+                    ctf.ClassTypeFactory.create_class("class-2"),
+                    ctf.ClassTypeFactory.create_class("class-3")
+            ]
+            vocab_relations = [
+                    rtf.RelationTypeFactory.create_relation("relation-0"),
+                    rtf.RelationTypeFactory.create_relation("relation-1"),
+                    rtf.RelationTypeFactory.create_relation("relation-2")
+            ]
+            vocab_literals = [
+                    ltf.LiteralTypeFactory.create_literal("literal-0"),
+                    ltf.LiteralTypeFactory.create_literal("literal-1"),
+                    ltf.LiteralTypeFactory.create_literal("literal-2")
+            ]
+        
+        # specify the information contained in all KGs that appear in the sequence
+        individuals = []
+        triples = []
+        literals = []
+        with dc.DataContext():
+            individuals.append(
+                    [
+                            individual_factory.IndividualFactory.create_individual("individual-0"),
+                            individual_factory.IndividualFactory.create_individual("individual-1"),
+                            individual_factory.IndividualFactory.create_individual("individual-2"),
+                            individual_factory.IndividualFactory.create_individual("individual-3"),
+                            individual_factory.IndividualFactory.create_individual("individual-4")
+                    ]
+            )
+            triples.append(
+                    [
+                            triple.Triple(individuals[-1][0], vocab_relations[2], individuals[-1][1], True)
+                    ]
+            )
+            literals.append([])
+        with dc.DataContext():
+            individuals.append(
+                    [
+                            individual_factory.IndividualFactory.create_individual("individual-0"),
+                            individual_factory.IndividualFactory.create_individual("individual-1"),
+                            individual_factory.IndividualFactory.create_individual("individual-2"),
+                            individual_factory.IndividualFactory.create_individual("individual-3"),
+                            individual_factory.IndividualFactory.create_individual("individual-4")
+                    ]
+            )
+            individuals[-1][0].classes.add(class_membership.ClassMembership(vocab_classes[0], True))
+            individuals[-1][1].classes.add(class_membership.ClassMembership(vocab_classes[1], False))
+            triples.append(
+                    [
+                            triple.Triple(individuals[-1][0], vocab_relations[2], individuals[-1][1], True),
+                            triple.Triple(individuals[-1][3], vocab_relations[0], individuals[-1][4], False),
+                            triple.Triple(
+                                    individuals[-1][3], vocab_relations[1], individuals[-1][4], True, inferred=True
+                            ),
+                    ]
+            )
+            literals.append([])
+        with dc.DataContext():
+            individuals.append(
+                    [
+                            individual_factory.IndividualFactory.create_individual("individual-0"),
+                            individual_factory.IndividualFactory.create_individual("individual-1"),
+                            individual_factory.IndividualFactory.create_individual("individual-2"),
+                            individual_factory.IndividualFactory.create_individual("individual-3"),
+                            individual_factory.IndividualFactory.create_individual("individual-4")
+                    ]
+            )
+            individuals[-1][0].classes.add(class_membership.ClassMembership(vocab_classes[0], True))
+            individuals[-1][2].classes.add(class_membership.ClassMembership(vocab_classes[2], True))
+            individuals[-1][2].classes.add(class_membership.ClassMembership(vocab_classes[3], False, inferred=True))
+            triples.append(
+                    [
+                            triple.Triple(individuals[-1][0], vocab_relations[2], individuals[-1][1], True),
+                            triple.Triple(individuals[-1][4], vocab_relations[0], individuals[-1][4], True),
+                            triple.Triple(
+                                    individuals[-1][4], vocab_relations[1], individuals[-1][4], False, prediction=True
+                            )
+                    ]
+            )
+            literals.append([])
+        with dc.DataContext():
+            individuals.append(
+                    [
+                            individual_factory.IndividualFactory.create_individual("individual-0"),
+                            individual_factory.IndividualFactory.create_individual("individual-1"),
+                            individual_factory.IndividualFactory.create_individual("individual-2"),
+                            individual_factory.IndividualFactory.create_individual("individual-3"),
+                            individual_factory.IndividualFactory.create_individual("individual-4")
+                    ]
+            )
+            individuals[-1][0].classes.add(class_membership.ClassMembership(vocab_classes[0], True))
+            individuals[-1][4].classes.add(class_membership.ClassMembership(vocab_classes[1], False))
+            individuals[-1][4].classes.add(class_membership.ClassMembership(vocab_classes[2], True, prediction=True))
+            triples.append(
+                    [
+                            triple.Triple(individuals[-1][0], vocab_relations[2], individuals[-1][1], True)
+                    ]
+            )
+            literals.append([])
+        
+        # assemble the target sequence of KGs
+        target_seq = []
+        for i, t, l in zip(individuals, triples, literals):
+            target_seq.append(knowledge_graph.KnowledgeGraph())
+            target_seq[-1].classes.add_all(vocab_classes)
+            target_seq[-1].relations.add_all(vocab_relations)
+            target_seq[-1].literals.add_all(vocab_literals)
+            target_seq[-1].individuals.add_all(i)
+            target_seq[-1].triples.add_all(t)
+            target_seq[-1].literals.add_all(l)
+
+        # //////// Tests -----------------------------------------------------------------------------------------------
+
+        # load knowledge graph
+        seq = kg_reader.KgReader.read_sequence("src/test/resources", "kg-seq")
+        
+        # CHECK: the retrieved sequence is a list of KGs
+        self.assertIsInstance(seq, list)
+        for s in seq:
+            self.assertIsInstance(s, knowledge_graph.KnowledgeGraph)
+        
+        # CHECK: the sequence contains the expected number of KGs
+        self.assertEqual(len(target_seq), len(seq))
+        
+        # CHECK: the single KGs are loaded correctly
+        for t, s in zip(target_seq, seq):
+            
+            # CHECK: vocabulary, individuals and triples of loaded graph are correct
+            self.assertEqual(t, s)
+    
+            # CHECK: individuals are loaded correctly
+            self.assertEqual(len(t.individuals), len(s.individuals))
+            for ind in s.individuals:
+                target_ind = t.individuals[ind.index]
+                self.assertEqual(target_ind.classes, ind.classes)
+                self.assertEqual(target_ind.literals, ind.literals)
         
 
 if __name__ == "__main__":

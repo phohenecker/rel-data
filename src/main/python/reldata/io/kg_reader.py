@@ -73,12 +73,14 @@ class KgReader(object):
     
     @classmethod
     @dc.new_context
-    def read(cls, input_dir: str, basename: str) -> knowledge_graph.KnowledgeGraph:
+    def read(cls, input_dir: str, basename: str, index: int = None) -> knowledge_graph.KnowledgeGraph:
         """Loads a knowledge graph from the specified location.
         
         Args:
             input_dir (str): The directory that contains all of the files.
             basename (str): The base name, i.e., the prefix, included in all files' names.
+            index (int, optional): If this is provided, then ``input_dir`` and ``basename`` are assumed to specify a
+                sequence of knowledge graphs, and ``index`` specifies the element of this sequence to retrieve.
         
         Returns:
             :class:`knowledge_graph.KnowledgeGraph`: A knowledge graph that has been populated according to the read
@@ -93,6 +95,9 @@ class KgReader(object):
         # ensure that the inputs are strings
         input_dir = str(input_dir)
         basename = str(basename)
+        if index is not None:
+            insanity.sanitize_type("index", index, int)
+            insanity.sanitize_range("index", index, minimum=0)
         
         # assemble all needed paths
         # the used postfixes have the following meanings:
@@ -112,9 +117,19 @@ class KgReader(object):
         literals_spec = os.path.join(input_dir, basename + io.LITERALS_SPEC_EXT)
         literals_inf = os.path.join(input_dir, basename + io.LITERALS_INF_EXT)
         literals_pred = os.path.join(input_dir, basename + io.LITERALS_PRED_EXT)
+        if index is not None:
+            classes_spec += "." + str(index)
+            classes_inf += "." + str(index)
+            classes_pred += "." + str(index)
+            relations_spec += "." + str(index)
+            relations_inf += "." + str(index)
+            relations_pred += "." + str(index)
+            literals_spec += "." + str(index)
+            literals_inf += "." + str(index)
+            literals_pred += "." + str(index)
         
         # check whether the input directory exists
-        if not os.path.isdir:
+        if not os.path.isdir(input_dir):
             raise ValueError("The provided <input_dir> does not exist: '{}'!".format(input_dir))
         
         # check whether all of the needed files exist:
@@ -392,6 +407,35 @@ class KgReader(object):
         else:
             all_kgs = [os.path.join(input_dir, kg) for kg in all_kgs]
             return list(executor.map(cls._read_from_one, [kg for kg in all_kgs]))
+    
+    @classmethod
+    def read_sequence(cls, input_dir: str, basename: str) -> typing.Sequence[knowledge_graph.KnowledgeGraph]:
+        """Loads a sequence of knowledge graph from the specified location.
+
+        Args:
+            input_dir (str): The directory that contains all of the files.
+            basename (str): The base name, i.e., the prefix, included in all files' names.
+
+        Returns:
+            :class:`knowledge_graph.KnowledgeGraph`: A knowledge graph that has been populated according to the read
+                information.
+
+        Raises:
+            ValueError: If ``input_dir`` does not refer to an existing directory or if any of the needed files is
+                missing.
+        """
+        # sanitize args
+        input_dir = str(input_dir)
+        basename = str(basename)
+        if not os.path.isdir(input_dir):
+            raise ValueError("The provided <input_dir> does not exist: '{}'!".format(input_dir))
+        
+        # determine the length of the sequence to load
+        seq_len = 0
+        while os.path.isfile(os.path.join(input_dir, basename + io.CLASSES_SPEC_EXT + "." + str(seq_len))):
+            seq_len += 1
+        
+        return [cls.read(input_dir, basename, index=idx) for idx in range(seq_len)]
 
     @classmethod
     def _read_from_one(cls, path: str) -> knowledge_graph.KnowledgeGraph:

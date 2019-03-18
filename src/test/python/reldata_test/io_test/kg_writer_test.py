@@ -82,6 +82,43 @@ class KgWriterTest(unittest.TestCase):
         os.remove(os.path.join(".", "kg-writer-test-knowledge-graph" + io.RELATIONS_PRED_EXT))
         os.remove(os.path.join(".", "kg-writer-test-knowledge-graph" + io.INDIVIDUALS_SPEC_EXT))
 
+    def test_write_sequence(self):
+        # load knowledge graph sequence for testing
+        # (notice, KgReader has been tested already)
+        target_seq = kg_reader.KgReader.read_sequence("src/test/resources", "kg-seq")
+
+        # write sequence
+        kg_writer.KgWriter.write_sequence(target_seq, ".", "kg-writer-test-seq")
+
+        # reload written knowledge graph
+        seq = kg_reader.KgReader.read_sequence(".", "kg-writer-test-seq")
+
+        # CHECK: knowledge graph sequence was written correctly
+        self.assertIsInstance(seq, list)
+        self.assertEqual(len(target_seq), len(seq))
+        for target_kg, kg in zip(target_seq, seq):
+            self.assertEqual(target_kg, kg)
+            for ind in kg.individuals:
+                target_ind = target_kg.individuals[ind.index]
+                self.assertEqual(target_ind.classes, ind.classes)
+                self.assertEqual(target_ind.literals, ind.literals)
+
+        # remove created files again
+        os.remove(os.path.join(".", "kg-writer-test-seq" + io.INDIVIDUALS_SPEC_EXT))
+        os.remove(os.path.join(".", "kg-writer-test-seq" + io.CLASSES_VOCAB_EXT))
+        os.remove(os.path.join(".", "kg-writer-test-seq" + io.LITERALS_VOCAB_EXT))
+        os.remove(os.path.join(".", "kg-writer-test-seq" + io.RELATIONS_VOCAB_EXT))
+        for idx in range(len(target_seq)):
+            os.remove(os.path.join(".", "kg-writer-test-seq" + io.CLASSES_SPEC_EXT) + "." + str(idx))
+            os.remove(os.path.join(".", "kg-writer-test-seq" + io.CLASSES_INF_EXT) + "." + str(idx))
+            os.remove(os.path.join(".", "kg-writer-test-seq" + io.CLASSES_PRED_EXT) + "." + str(idx))
+            os.remove(os.path.join(".", "kg-writer-test-seq" + io.LITERALS_SPEC_EXT) + "." + str(idx))
+            os.remove(os.path.join(".", "kg-writer-test-seq" + io.LITERALS_INF_EXT) + "." + str(idx))
+            os.remove(os.path.join(".", "kg-writer-test-seq" + io.LITERALS_PRED_EXT) + "." + str(idx))
+            os.remove(os.path.join(".", "kg-writer-test-seq" + io.RELATIONS_SPEC_EXT) + "." + str(idx))
+            os.remove(os.path.join(".", "kg-writer-test-seq" + io.RELATIONS_INF_EXT) + "." + str(idx))
+            os.remove(os.path.join(".", "kg-writer-test-seq" + io.RELATIONS_PRED_EXT) + "." + str(idx))
+        
 
 if __name__ == "__main__":
     unittest.main()
