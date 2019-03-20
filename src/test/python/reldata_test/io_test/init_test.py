@@ -53,6 +53,17 @@ class InitTest(unittest.TestCase):
                 io.find_knowledge_graphs("src/test/resources")
         )
 
+    def test_find_knowledge_graph_sequences(self):
+        # CHECK: providing the path of a non-existing directory causes a ValueError
+        with self.assertRaises(ValueError):
+            io.find_knowledge_graph_sequences("./this/is/not/an/existing/directory")
+    
+        # CHECK: knowledge graphs are discovered as expected
+        self.assertEqual(
+                ["kg-seq"],
+                io.find_knowledge_graph_sequences("src/test/resources")
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

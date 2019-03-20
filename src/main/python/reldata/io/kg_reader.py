@@ -380,11 +380,13 @@ class KgReader(object):
         return kg
     
     @classmethod
-    def read_all(cls, input_dir: str, executor: futures.Executor=None) -> typing.List[knowledge_graph.KnowledgeGraph]:
+    def read_all(cls, input_dir: str, executor: futures.Executor = None) -> typing.List[knowledge_graph.KnowledgeGraph]:
         """Loads all knowledge graphs that are discovered in the specified directory.
         
         Args:
-        input_dir (str): The path of the directory that is being searched.
+            input_dir (str): The path of the directory that is being searched.
+            executor (futures.Executor, optional): An optional executor for loading multiple knowledge graphs
+                concurrently.
     
         Returns:
             list[:class:`knowledge_graph.KnowledgeGraph`]: All knowledge graphs that were found in ``input_dir``.
@@ -406,10 +408,46 @@ class KgReader(object):
             return [cls.read(input_dir, kg) for kg in all_kgs]
         else:
             all_kgs = [os.path.join(input_dir, kg) for kg in all_kgs]
-            return list(executor.map(cls._read_from_one, [kg for kg in all_kgs]))
+            return list(executor.map(cls._read_from_one, all_kgs))
     
     @classmethod
-    def read_sequence(cls, input_dir: str, basename: str) -> typing.Sequence[knowledge_graph.KnowledgeGraph]:
+    def read_all_sequences(
+            cls,
+            input_dir: str,
+            executor: futures.Executor = None
+    ) -> typing.List[typing.List[knowledge_graph.KnowledgeGraph]]:
+        """Loads all knowledge-graph sequences that are discovered in the specified directory.
+
+        Args:
+            input_dir (str): The path of the directory that is being searched.
+            executor (futures.Executor, optional): An optional executor for loading multiple knowledge-graph sequences
+                concurrently.
+
+        Returns:
+            list[list[:class:`knowledge_graph.KnowledgeGraph`]]: All knowledge-graph sequences that were found in
+                ``input_dir``.
+
+        Raises:
+            ValueError: If the specified directory does not exist.
+        """
+        # sanitize args
+        input_dir = str(input_dir)
+        if not os.path.isdir(input_dir):
+            raise ValueError("The specified <input_dir> does not exist: '{}'!".format(input_dir))
+        insanity.sanitize_type("executor", executor, futures.Executor, none_allowed=True)
+    
+        # find all knowledge-graph sequences in the input directory
+        all_seq = io.find_knowledge_graph_sequences(input_dir)
+    
+        # load all knowledge graphs that were found
+        if executor is None:
+            return [cls.read_sequence(input_dir, seq) for seq in all_seq]
+        else:
+            all_seq = [os.path.join(input_dir, seq) for seq in all_seq]
+            return list(executor.map(cls._read_seq_from_one, all_seq))
+    
+    @classmethod
+    def read_sequence(cls, input_dir: str, basename: str) -> typing.List[knowledge_graph.KnowledgeGraph]:
         """Loads a sequence of knowledge graph from the specified location.
 
         Args:
@@ -417,8 +455,8 @@ class KgReader(object):
             basename (str): The base name, i.e., the prefix, included in all files' names.
 
         Returns:
-            :class:`knowledge_graph.KnowledgeGraph`: A knowledge graph that has been populated according to the read
-                information.
+            list[:class:`knowledge_graph.KnowledgeGraph`]: A knowledge graph seqeunce that has been populated according
+                to the read information.
 
         Raises:
             ValueError: If ``input_dir`` does not refer to an existing directory or if any of the needed files is
@@ -452,3 +490,19 @@ class KgReader(object):
         input_dir = path[:split_index]
         base_name = path[split_index + 1:]
         return cls.read(input_dir, base_name)
+
+    @classmethod
+    def _read_seq_from_one(cls, path: str) -> typing.List[knowledge_graph.KnowledgeGraph]:
+        """Splits the provided path into the directory and the base name of a knowledge-graph sequence, and then invokes
+        :meth:`read_sequence`.
+
+        Args:
+            path (str): The path the contains both the input directory and the base name of a knowledge-graph sequence.
+
+        Returns:
+            list[:class:`knowledge_graph.KnowledgeGraph`]: The knowledge-graph sequence that was loaded from ``path``.
+        """
+        split_index = path.rfind(os.path.sep)
+        input_dir = path[:split_index]
+        base_name = path[split_index + 1:]
+        return cls.read_sequence(input_dir, base_name)

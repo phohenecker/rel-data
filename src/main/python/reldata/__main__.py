@@ -12,6 +12,7 @@ import argmagic
 
 from argmagic import decorators
 
+from reldata import io
 from reldata.io import kg_reader
 
 
@@ -205,20 +206,31 @@ def main(args: _Config) -> None:
     
     # load the knowledge graph(s) to analyze
     if args.base_name is None:
-        data = kg_reader.KgReader.read_all(args.input_dir)
+        
+        # scan input dir for knowledge graphs
+        data = ((args.input_dir, base_name) for base_name in io.find_knowledge_graphs(args.input_dir))
+
         if not data:
             print("No data was found in '{}'!".format(args.input_dir))
             return
     else:
-        data = [kg_reader.KgReader.read(args.input_dir, args.base_name)]
+        data = [(args.input_dir, args.base_name)]
     
     # create data structures for bookkeeping
     classes = {}
     relations = {}
     literals = {}
+    num_individuals = 0
     
     # iterate over all of the loaded knowledge graphs
-    for kg in data:
+    for input_dir, base_name in data:
+        
+        print("processing {}/{}...".format(input_dir, base_name))
+        
+        kg = kg_reader.KgReader.read(input_dir, base_name)
+        
+        # update individual count
+        num_individuals += len(kg.individuals)
 
         # register all classes/relations/literals of the current knowledge graph
         for c in kg.classes:
@@ -275,6 +287,8 @@ def main(args: _Config) -> None:
                 else:
                     relations[triple.predicate.name].spec_neg += 1
     
+    print("TOTAL INDIVIDUALS:", num_individuals, "\n")
+    
     # print class statistics
     if classes:
         class_data = [
@@ -291,6 +305,31 @@ def main(args: _Config) -> None:
                 class_data,
                 ["name", "spec. members (+/-)", "inf. members (+/-)", "pred. member (+/-)"]
         )
+        print(
+                "(TOTAL: {} / {}, {} / {} , {} / {})".format(
+                        sum(stats.spec_pos for stats in classes.values()),
+                        sum(stats.spec_neg for stats in classes.values()),
+                        sum(stats.inf_pos for stats in classes.values()),
+                        sum(stats.inf_neg for stats in classes.values()),
+                        sum(stats.pred_pos for stats in classes.values()),
+                        sum(stats.pred_neg for stats in classes.values())
+                )
+        )
+        print()
+        print("class_data = [")
+        for name, stats in sorted(classes.items(), key=lambda x: x[0]):
+            print(
+                "    (\"{}\", {}, {}, {}, {}, {}, {}),".format(
+                    name,
+                    stats.spec_pos,
+                    stats.spec_neg,
+                    stats.inf_pos,
+                    stats.inf_neg,
+                    stats.pred_pos,
+                    stats.pred_neg
+                )
+            )
+        print("]")
     else:
         print("No classes were found!")
     print()
@@ -311,6 +350,31 @@ def main(args: _Config) -> None:
                 relation_data,
                 ["name", "spec. triples (+/-)", "inf. triples (+/-)", "pred. member (+/-)"]
         )
+        print(
+                "(TOTAL: {} / {}, {} / {} , {} / {})".format(
+                        sum(stats.spec_pos for stats in relations.values()),
+                        sum(stats.spec_neg for stats in relations.values()),
+                        sum(stats.inf_pos for stats in relations.values()),
+                        sum(stats.inf_neg for stats in relations.values()),
+                        sum(stats.pred_pos for stats in relations.values()),
+                        sum(stats.pred_neg for stats in relations.values())
+                )
+        )
+        print()
+        print("rel_data = [")
+        for name, stats in sorted(relations.items(), key=lambda x: x[0]):
+            print(
+                    "    (\"{}\", {}, {}, {}, {}, {}, {}),".format(
+                            name,
+                            stats.spec_pos,
+                            stats.spec_neg,
+                            stats.inf_pos,
+                            stats.inf_neg,
+                            stats.pred_pos,
+                            stats.pred_neg
+                    )
+            )
+        print("]")
     else:
         print("No relations were found!")
     print()

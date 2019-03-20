@@ -152,6 +152,36 @@ class KgReaderTest(unittest.TestCase):
 
         # CHECK: the knowledge graphs were loaded correctly (with the process pool)
         self.assertEqual(target_kgs, all_kgs)
+
+    def test_read_all_sequences(self):
+        # the data that will be loaded
+        input_dir = "src/test/resources"
+        base_name = "kg-seq"
+    
+        # the resources dir contains one knowledge graph, which should be discovered and loaded
+        target_sequences = [kg_reader.KgReader.read_sequence(input_dir, base_name)]
+    
+        # load all knowledge graphs from resources dir
+        all_seq = kg_reader.KgReader.read_all_sequences(input_dir)
+    
+        # CHECK: the knowledge graphs were loaded correctly
+        self.assertEqual(target_sequences, all_seq)
+    
+        # load all knowledge graphs with a thread pool
+        pool = futures.ThreadPoolExecutor(max_workers=1)
+        all_seq = kg_reader.KgReader.read_all_sequences(input_dir, executor=pool)
+        pool.shutdown()
+    
+        # CHECK: the knowledge graphs were loaded correctly (with the thread pool)
+        self.assertEqual(target_sequences, all_seq)
+    
+        # load all knowledge graphs with a process pool
+        pool = futures.ProcessPoolExecutor(max_workers=1)
+        all_seq = kg_reader.KgReader.read_all_sequences(input_dir, executor=pool)
+        pool.shutdown()
+    
+        # CHECK: the knowledge graphs were loaded correctly (with the process pool)
+        self.assertEqual(target_sequences, all_seq)
     
     def test_read_sequence(self):
         

@@ -97,18 +97,24 @@ RELATIONS_VOCAB_EXT = ".relations"
 #  OTHER CONSTANTS  ####################################################################################################
 
 ALL_EXT = [
-        CLASSES_INF_EXT,
-        CLASSES_SPEC_EXT,
         CLASSES_VOCAB_EXT,
         INDIVIDUALS_SPEC_EXT,
-        LITERALS_INF_EXT,
-        LITERALS_SPEC_EXT,
         LITERALS_VOCAB_EXT,
+        RELATIONS_VOCAB_EXT,
+        CLASSES_INF_EXT,  # <<<<<<<<<<<<<<<<<< from here on, files have additional extensions (e.g., ".0") for sequences
+        CLASSES_PRED_EXT,
+        CLASSES_SPEC_EXT,
+        LITERALS_INF_EXT,
+        LITERALS_PRED_EXT,
+        LITERALS_SPEC_EXT,
         RELATIONS_INF_EXT,
-        RELATIONS_SPEC_EXT,
-        RELATIONS_VOCAB_EXT
+        RELATIONS_PRED_EXT,
+        RELATIONS_SPEC_EXT
 ]
 """list[str]: A list of all file extensions that are used to store the different parts of a knowledge graph."""
+
+INDIVIDUALS_REGEX = "^(?P<base_name>.+){}$".format(INDIVIDUALS_SPEC_EXT.replace(".", "\\."))
+"""str: A regex that matches any files that specify the individuals of a knowledge graph."""
 
 KG_FILE_REGEX = "^(?P<base_name>.+)\\.({})$".format("|".join([e[1:] for e in ALL_EXT]))
 """str: A regex that matches any filename that belongs to one of the files of a knowledge graph."""
@@ -159,3 +165,50 @@ def find_knowledge_graphs(input_dir: str) -> typing.List[str]:
             pass  # nothing to do
     
     return sorted(all_kgs)
+
+
+def find_knowledge_graph_sequences(input_dir: str) -> typing.List[str]:
+    """Scans the provided directory for stored knowledge-graph sequences.
+
+    Args:
+        input_dir (str): The path of the directory that is being searched.
+
+    Returns:
+        list[str]: A list that contains the base names of all knowledge graphs that were found in ``input_dir``.
+
+    Raises:
+        ValueError: If the specified directory does not exist.
+    """
+    # sanitize args
+    input_dir = str(input_dir)
+    if not os.path.isdir(input_dir):
+        raise ValueError("The specified <input_dir> does not exist: '{}'!".format(input_dir))
+    
+    # gather the base names of all files that have one of the required file extensions
+    candidates = set()
+    for file in os.listdir(input_dir):  # run through all files in the input dir
+        # check if the file has one of the considered file extensions
+        m = re.match(INDIVIDUALS_REGEX, file)
+        if m is not None:
+            candidates.add(m.group("base_name"))
+    
+    # check for which of the found base names all of the required files exist
+    all_seq = []
+    for base_name in candidates:
+        try:
+            # run through the file extensions of all needed files
+            for ext in ALL_EXT[:4]:
+                # if current extensions is not found -> skip candidate
+                if not os.path.isfile(os.path.join(input_dir, base_name + ext)):
+                    raise StopIteration
+            for ext in ALL_EXT[4:]:
+                # if current extensions is not found -> skip candidate
+                if not os.path.isfile(os.path.join(input_dir, base_name + ext + ".0")):
+                    raise StopIteration
+            
+            # add candidate to the list of discovered knowledge graphs
+            all_seq.append(base_name)
+        except StopIteration:
+            pass  # nothing to do
+    
+    return sorted(all_seq)
